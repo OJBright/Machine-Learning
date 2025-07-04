@@ -1,0 +1,29 @@
+# Step 1: Identify and remove outliers for all numeric columns, and count them
+numeric_cols = clinical_data.select_dtypes(include=['float64', 'int64']).columns
+
+# Function to calculate IQR, remove outliers, and count them
+def remove_outliers_and_count(df, cols):
+    df_no_outliers = df.copy()
+    outlier_counts = {}  # Store outlier counts for each column
+    for col in cols:
+        Q1 = df_no_outliers[col].quantile(0.25)
+        Q3 = df_no_outliers[col].quantile(0.75)
+        IQR = Q3 - Q1
+        lower_bound = Q1 - 1.5 * IQR
+        upper_bound = Q3 + 1.5 * IQR
+
+        # Identify outliers
+        outliers = df_no_outliers[(df_no_outliers[col] < lower_bound) | (df_no_outliers[col] > upper_bound)]
+        outlier_counts[col] = len(outliers)  # Store outlier count
+
+        # Remove outliers
+        df_no_outliers = df_no_outliers[(df_no_outliers[col] >= lower_bound) & (df_no_outliers[col] <= upper_bound)]
+
+    return df_no_outliers, outlier_counts
+
+# Remove outliers and get the counts
+clinical_data, outlier_counts = remove_outliers_and_count(clinical_data, numeric_cols)
+
+# Print the outlier counts for each column
+for column, count in outlier_counts.items():
+    print(f"Column '{column}': {count} outliers")
